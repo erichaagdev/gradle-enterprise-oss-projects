@@ -84,7 +84,7 @@ jobs:
             
             Second build's results: ${{ steps.fetch-results.outputs.results }}
       - name: Capture experiment analysis
+        env:
+          EXPERIMENT_SUMMARY: ${{ steps.analyze.outputs.summary }}
         run: |
-          cat >> "$GITHUB_STEP_SUMMARY" << EOF
-          ${{ steps.analyze.outputs.summary }}
-          EOF
+          echo "$EXPERIMENT_SUMMARY" >> "$GITHUB_STEP_SUMMARY"
