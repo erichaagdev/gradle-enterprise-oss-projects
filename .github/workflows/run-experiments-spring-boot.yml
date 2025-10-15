@@ -1,8 +1,6 @@
 name: Run Experiment
 
 on:
-  schedule:
-    - cron: "0 23 * * 5"
   workflow_dispatch:
 
 env:
@@ -59,6 +57,6 @@ jobs:
       - name: Analyze experiment results
         id: analyze
         env:
-          EXPERIMENT_RESULTS: ${{ needs.experiment.outputs }}
+          EXPERIMENT_RESULTS: ${{ needs.experiment.outputs.results }}
         run: |
           echo "$EXPERIMENT_RESULTS"
