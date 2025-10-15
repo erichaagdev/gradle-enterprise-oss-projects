@@ -42,7 +42,7 @@ jobs:
           develocity_server="$(echo "$build_scans" | tail -1 | cut -d ',' -f3)"
           second_build_scan_id="$(echo "$build_scans" | tail -1 | cut -d ',' -f5)"
           second_build_results="$(curl -s \
-            -H "Authorization: Bearer ${{ secrets.DEVELOCITY_ACCESS_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.DEVELOCITY_API_KEY }}" \
             "$develocity_server/api/builds/$second_build_scan_id/gradle-build-cache-performance")"
           echo "experiment_results=$second_build_results" >> "$GITHUB_OUTPUT"
       - name: Analyze experiment results
