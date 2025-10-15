@@ -37,6 +37,7 @@ jobs:
         if: matrix.experimentId == 3
       - name: Fetch experiment results
         id: fetch-results
+        working-directory: develocity-gradle-build-validation
         run: |
           build_scans="$(cat ".data/03-validate-local-build-caching-different-locations/latest/build-scans.csv")"
           develocity_server="$(echo "$build_scans" | tail -1 | cut -d ',' -f3)"
