@@ -34,7 +34,6 @@ jobs:
           tasks: ${{ env.TASKS }}
           develocityUrl: ${{ env.DEVELOCITY_URL }}
           failIfNotFullyCacheable: true
-        if: matrix.experimentId == 3
       - name: Fetch experiment results
         id: fetch-results
         working-directory: develocity-gradle-build-validation
