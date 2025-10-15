@@ -44,9 +44,7 @@ jobs:
           second_build_results="$(curl -s \
             -H "Authorization: Bearer ${{ secrets.DEVELOCITY_API_KEY }}" \
             "$develocity_server/api/builds/$second_build_scan_id/gradle-build-cache-performance")"
-          echo 'results<<EOF' >> $GITHUB_OUTPUT
-          echo $second_build_results >> $GITHUB_OUTPUT
-          echo 'EOF' >> $GITHUB_OUTPUT
+          echo "results=$second_build_results" >> "$GITHUB_OUTPUT"
       - name: Analyze experiment results
         id: analyze
         uses: google-github-actions/run-gemini-cli@v0.1.13
@@ -87,4 +85,6 @@ jobs:
             Second build's results: ${{ steps.fetch-results.outputs.results }}
       - name: Print experiment analysis
         run: |
-          echo '${{ steps.analyze.outputs.summary }}'
+          cat << EOF
+          ${{ steps.analyze.outputs.summary }}
+          EOF
