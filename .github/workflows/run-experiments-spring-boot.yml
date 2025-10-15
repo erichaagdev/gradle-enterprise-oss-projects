@@ -83,8 +83,8 @@ jobs:
             Your response should be structured, clear, and directly help the user understand both the problem and the solution.
             
             Second build's results: ${{ steps.fetch-results.outputs.results }}
-      - name: Print experiment analysis
+      - name: Capture experiment analysis
         run: |
-          cat << EOF
+          cat >> "$GITHUB_STEP_SUMMARY" << EOF
           ${{ steps.analyze.outputs.summary }}
           EOF
