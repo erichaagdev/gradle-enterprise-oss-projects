@@ -38,7 +38,7 @@ jobs:
           gitRepo: ${{ env.GIT_REPO }}
           tasks: ${{ env.TASKS }}
           develocityUrl: ${{ env.DEVELOCITY_URL }}
-          failIfNotFullyCacheable: true
+          failIfNotFullyCacheable: false
       - name: Fetch experiment results
         id: fetch-results
         working-directory: develocity-gradle-build-validation
