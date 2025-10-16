@@ -148,6 +148,6 @@ runs:
       run: |
         if [[ "$EXPERIMENT_ID" == '3' ]]; then
           echo 'summary<<EOF' >> $GITHUB_OUTPUT
-          echo $EXP3_RESULTS >> $GITHUB_OUTPUT
+          echo "$EXP3_RESULTS" >> $GITHUB_OUTPUT
           echo 'EOF' >> $GITHUB_OUTPUT
         fi
