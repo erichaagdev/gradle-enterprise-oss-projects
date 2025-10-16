@@ -41,7 +41,7 @@ jobs:
           failIfNotFullyCacheable: false
       - name: Analyze results
         id: analyze-results
-        uses: ./.github/actions/summarize-gradle-experiment-results
+        uses: erichaagdev/gradle-enterprise-oss-projects/.github/actions/summarize-gradle-experiment-results@main
         with:
           develocityApiKey: ${{ secrets.DEVELOCITY_API_KEY }}
           experimentId: ${{ matrix.experimentId }}
