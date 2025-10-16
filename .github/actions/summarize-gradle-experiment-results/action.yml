@@ -31,9 +31,9 @@ runs:
       run: |
         build_scans_csv="$(cat develocity-gradle-build-validation/.data/0${EXPERIMENT_ID}-*/latest/build-scans.csv)"
         echo "build_scans_csv=$build_scans_csv"
-        develocity_server="$(echo "build_scans_csv" | tail -1 | cut -d ',' -f3)"
+        develocity_server="$(echo "$build_scans_csv" | tail -1 | cut -d ',' -f3)"
         echo "develocity_server=$develocity_server"
-        second_build_scan_id="$(echo "build_scans_csv" | tail -1 | cut -d ',' -f5)"
+        second_build_scan_id="$(echo "$build_scans_csv" | tail -1 | cut -d ',' -f5)"
         echo "second_build_scan_id=$second_build_scan_id"
         second_build_results="$(curl -s \
           -H "Authorization: Bearer $DEVELOCITY_API_KEY" \
