@@ -30,11 +30,15 @@ runs:
         DEVELOCITY_API_KEY: ${{ inputs.develocityApiKey }}
       run: |
         build_scans_csv="$(cat develocity-gradle-build-validation/.data/0${EXPERIMENT_ID}-*/latest/build-scans.csv)"
+        echo "build_scans_csv=$build_scans_csv"
         develocity_server="$(echo "build_scans_csv" | tail -1 | cut -d ',' -f3)"
+        echo "develocity_server=$develocity_server"
         second_build_scan_id="$(echo "build_scans_csv" | tail -1 | cut -d ',' -f5)"
+        echo "second_build_scan_id=$second_build_scan_id"
         second_build_results="$(curl -s \
           -H "Authorization: Bearer $DEVELOCITY_API_KEY" \
           "$develocity_server/api/builds/$second_build_scan_id/gradle-build-cache-performance")"
+        echo "second_build_results=$second_build_results"
         echo "results=$second_build_results" >> "$GITHUB_OUTPUT"
     - name: Summarize results
       id: summarize-results
