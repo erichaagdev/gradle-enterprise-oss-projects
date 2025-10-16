@@ -1,0 +1,76 @@
+name: Summarize Gradle experiment results
+description: Summarizes Gradle experiment results from the Develocity Build Validation Scripts
+
+inputs:
+  experimentId:
+    description: Experiment ID of the experiment to summarize.
+    required: true
+  develocityApiKey:
+    description: Develocity API key or token with API permissions.
+    required: true
+  geminiApiKey:
+    description: Gemini API key.
+    required: true
+outputs:
+  results:
+    description: Results of the experiment formatted as JSON.
+    value: ${{ steps.fetch-results.outputs.results }}
+  summary:
+    description: Plain-text summary of the experiment results.
+    value: ${{ steps.summarize-results.outputs.summary }}
+
+runs:
+  using: composite
+  steps:
+    - name: Fetch results
+      id: fetch-results
+      shell: bash
+      env:
+        EXPERIMENT_ID: ${{ inputs.experimentId }}
+        DEVELOCITY_API_KEY: ${{ inputs.develocityApiKey }}
+      run: |
+        build_scans_csv="$(cat "develocity-gradle-build-validation/.data/0${EXPERIMENT_ID}*/latest/build-scans.csv")"
+        develocity_server="$(echo "$build_scans" | tail -1 | cut -d ',' -f3)"
+        second_build_scan_id="$(echo "$build_scans" | tail -1 | cut -d ',' -f5)"
+        second_build_results="$(curl -s \
+          -H "Authorization: Bearer $DEVELOCITY_API_KEY" \
+          "$develocity_server/api/builds/$second_build_scan_id/gradle-build-cache-performance")"
+        echo "results=$second_build_results" >> "$GITHUB_OUTPUT"
+    - name: Summarize results
+      id: summarize-results
+      uses: google-github-actions/run-gemini-cli@v0.1.13
+      with:
+        gemini_api_key: ${{ inputs.geminiApiKey }}
+        prompt: |
+          You are a **Develocity Solutions Engineer**, an expert in optimizing Gradle and Maven builds.
+          Your primary mission is to analyze JSON results from a Develocity Build Validation Script and provide actionable recommendations to improve build performance.
+          
+          ***
+          
+          ## Context: Build Validation Experiment
+          
+          The script you are analyzing tests for **non-relocatable tasks**.
+          These are tasks that cannot be reused from the build cache when the project's location on the file system changes.
+          This is a common and significant source of avoidable work in builds.
+          
+          The experiment follows a precise two-step process:
+          1.  **Build 1:** A build is run with a typical invocation (e.g., './gradlew clean build') to populate an empty local build cache.
+          2.  **Build 2:** The exact same build is immediately run from a different directory, using the cache populated by the first build.
+          
+          Ideally, all cacheable tasks in Build 2 should be pulled from the cache ('FROM_CACHE').
+          Your analysis will focus on tasks that were executed again in the second build, as this indicates they have non-relocatable inputs (e.g., absolute paths) that break cacheability.
+          
+          ***
+          
+          ## Your Task
+          
+          You will be provided with the JSON API response from the **second build**. Your analysis must perform the following:
+          
+          1.  **Identify Problematic Tasks**: Using the 'taskExecution' array, pinpoint the cacheable tasks that were re-executed instead of being pulled from the cache. The specific 'avoidanceOutcome' to look out for is 'executed_cacheable'.
+          2.  **Diagnose the Root Cause**: The root cause is almost certainly non-relocatable inputs. Clearly state that these tasks are re-running because their inputs likely contain absolute paths that changed between the two builds, invalidating their cache key.
+          3.  **Quantify the Impact**: Reference the 'duration' field of the task to explain the potential time savings that could be achieved by fixing these tasks.
+          4.  **Provide Actionable Recommendations**: Deliver a clear, expert recommendation. Explain that the user needs to investigate the inputs of the identified tasks and convert any absolute paths to relative paths to ensure they are relocatable and fully cacheable.
+          
+          Your response should be structured, clear, and directly help the user understand both the problem and the solution.
+          
+          Second build's results: ${{ steps.fetch-results.outputs.results }}
