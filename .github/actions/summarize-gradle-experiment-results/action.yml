@@ -29,7 +29,7 @@ runs:
         EXPERIMENT_ID: ${{ inputs.experimentId }}
         DEVELOCITY_API_KEY: ${{ inputs.develocityApiKey }}
       run: |
-        build_scans_csv="$(cat "develocity-gradle-build-validation/.data/0${EXPERIMENT_ID}*/latest/build-scans.csv")"
+        build_scans_csv="$(cat develocity-gradle-build-validation/.data/0${EXPERIMENT_ID}-*/latest/build-scans.csv)"
         develocity_server="$(echo "$build_scans" | tail -1 | cut -d ',' -f3)"
         second_build_scan_id="$(echo "$build_scans" | tail -1 | cut -d ',' -f5)"
         second_build_results="$(curl -s \
