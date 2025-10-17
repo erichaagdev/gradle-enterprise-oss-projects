@@ -50,7 +50,7 @@ jobs:
     needs: experiment
     steps:
       - name: Analyze experiment results
-        uses: erichaagdev/gradle-enterprise-oss-projects/.github/actions/analyze-gradle-experiment-results
+        uses: erichaagdev/gradle-enterprise-oss-projects/.github/actions/analyze-gradle-experiment-results@main
         with:
           develocityApiKey: ${{ secrets.DEVELOCITY_API_KEY }}
           geminiApiKey: ${{ secrets.GEMINI_API_KEY }}
