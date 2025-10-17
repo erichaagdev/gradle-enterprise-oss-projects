@@ -22,7 +22,7 @@ runs:
         BUILD_SCAN_EXP3: ${{ inputs.buildScanExperiment3 }}
         DEVELOCITY_API_KEY: ${{ inputs.develocityApiKey }}
       run: |
-        develocity_server="$(echo "$build_scans_csv" | tail -1 | cut -d ',' -f3)"
+        develocity_server="$(echo "$BUILD_SCAN_EXP3" | cut -d'/' -f1,2,3)"
         
         build_scan_id_exp3="${BUILD_SCAN_EXP3##*/}"
 
