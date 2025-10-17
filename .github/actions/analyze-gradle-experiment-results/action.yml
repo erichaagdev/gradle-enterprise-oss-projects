@@ -27,7 +27,7 @@ runs:
         DEVELOCITY_API_KEY: ${{ inputs.develocityApiKey }}
       run: |
         extract_build_scan_id() {
-          echo "${$1##*/}"
+          echo "$1" | rev | cut -d'/' -f1 | rev
         }
         
         fetch_results() {
