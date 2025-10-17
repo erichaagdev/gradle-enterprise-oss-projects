@@ -19,6 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - experimentId: 2
           - experimentId: 3
     runs-on: ubuntu-latest
     outputs:
