@@ -22,6 +22,7 @@ jobs:
           - experimentId: 3
     runs-on: ubuntu-latest
     outputs:
+      build-scan-exp2: ${{ steps.run-exp3.outputs.buildScanSecondBuild }}
       build-scan-exp3: ${{ steps.run-exp3.outputs.buildScanSecondBuild }}
     steps:
       - name: Set up JDK 17
@@ -33,6 +34,17 @@ jobs:
         uses: gradle/develocity-build-validation-scripts/.github/actions/gradle/download@actions-stable
         with:
           downloadDevelopmentRelease: true
+      - name: Run experiment 2
+        id: run-exp2
+        uses: gradle/develocity-build-validation-scripts/.github/actions/gradle/experiment-2@actions-stable
+        env:
+          DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
+        with:
+          gitBranch: ${{ env.GIT_BRANCH }}
+          gitRepo: ${{ env.GIT_REPO }}
+          tasks: ${{ env.TASKS }}
+          develocityUrl: ${{ env.DEVELOCITY_URL }}
+          failIfNotFullyCacheable: false
       - name: Run experiment 3
         id: run-exp3
         uses: gradle/develocity-build-validation-scripts/.github/actions/gradle/experiment-3@actions-stable
@@ -55,4 +67,5 @@ jobs:
         with:
           develocityApiKey: ${{ secrets.DEVELOCITY_API_KEY }}
           geminiApiKey: ${{ secrets.GEMINI_API_KEY }}
+          buildScanExperiment2: ${{ needs.experiment.outputs.build-scan-exp2 }}
           buildScanExperiment3: ${{ needs.experiment.outputs.build-scan-exp3 }}
