@@ -310,7 +310,10 @@ runs:
     - name: Capture results
       shell: bash
       env:
+        SUMMARY_EXP2: ${{ steps.summarize-results-exp2.outputs.summary }}
         SUMMARY_EXP3: ${{ steps.summarize-results-exp3.outputs.summary }}
       run: |
+        echo "## Experiment 2" >> $GITHUB_STEP_SUMMARY
+        echo "$SUMMARY_EXP2" >> $GITHUB_STEP_SUMMARY
         echo "## Experiment 3" >> $GITHUB_STEP_SUMMARY
         echo "$SUMMARY_EXP3" >> $GITHUB_STEP_SUMMARY

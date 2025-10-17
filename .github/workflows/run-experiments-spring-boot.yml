@@ -46,6 +46,7 @@ jobs:
           tasks: ${{ env.TASKS }}
           develocityUrl: ${{ env.DEVELOCITY_URL }}
           failIfNotFullyCacheable: false
+        if: matrix.experimentId == 2
       - name: Run experiment 3
         id: run-exp3
         uses: gradle/develocity-build-validation-scripts/.github/actions/gradle/experiment-3@actions-stable
@@ -57,6 +58,7 @@ jobs:
           tasks: ${{ env.TASKS }}
           develocityUrl: ${{ env.DEVELOCITY_URL }}
           failIfNotFullyCacheable: false
+        if: matrix.experimentId == 3
 
   analyze:
     name: Analyze results
