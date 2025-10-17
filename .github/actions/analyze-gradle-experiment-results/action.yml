@@ -400,6 +400,23 @@ runs:
           
           The top priority should be a thorough investigation of the `:core-utils:compileJava` and `:feature-login:compileJava` tasks, as they fail under multiple conditions. Begin by addressing the volatile inputs identified in the in-place caching analysis, as these issues often require more in-depth code changes. Afterward, address the non-relocatable inputs by ensuring all file paths are relative. Fixing these core tasks will have the most significant impact on build performance and reliability.
           ```
+          
+          ---
+          
+          Now, analyze the following summaries and generate the report as instructed:
+          
+          Experiment 2 analysis:
+          
+          ```
+          ${{ steps.summarize-results-exp2.outputs.summary }}
+          ```
+          
+          Experiment 3 analysis:
+          
+          ```
+          ${{ steps.summarize-results-exp3.outputs.summary }}
+          ```
+
     - name: Capture results
       shell: bash
       env:
