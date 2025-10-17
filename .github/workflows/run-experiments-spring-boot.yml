@@ -23,7 +23,7 @@ jobs:
           - experimentId: 3
     runs-on: ubuntu-latest
     outputs:
-      build-scan-exp2: ${{ steps.run-exp3.outputs.buildScanSecondBuild }}
+      build-scan-exp2: ${{ steps.run-exp2.outputs.buildScanSecondBuild }}
       build-scan-exp3: ${{ steps.run-exp3.outputs.buildScanSecondBuild }}
     steps:
       - name: Set up JDK 17
