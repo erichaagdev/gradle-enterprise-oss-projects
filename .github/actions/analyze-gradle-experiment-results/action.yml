@@ -612,7 +612,7 @@ runs:
         EXP2_EXECUTED_TASKS: ${{ steps.fetch-results.outputs.exp2-executed-cacheable-tasks }}
         EXP3_SUMMARY: ${{ steps.summarize-exp3.outputs.summary }}
         EXP3_EXECUTED_TASKS: ${{ steps.fetch-results.outputs.exp3-executed-cacheable-tasks }}
-        SUMMARY_FINDINGS: ${{ steps.summarize-findings.outputs.summary }}
+        FINDINGS_SUMMARY: ${{ steps.summarize-findings.outputs.summary }}
       run: |
         write_summary() {
           local experiment_number summary executed_tasks
@@ -632,9 +632,9 @@ runs:
         
         echo "# Summary"
         
-        write_summary 1 "$SUMMARY_EXP1" "$EXP1_EXECUTED_TASKS"
-        write_summary 2 "$SUMMARY_EXP2" "$EXP2_EXECUTED_TASKS"
-        write_summary 3 "$SUMMARY_EXP3" "$EXP3_EXECUTED_TASKS"
+        write_summary 1 "$EXP1_SUMMARY" "$EXP1_EXECUTED_TASKS"
+        write_summary 2 "$EXP2_SUMMARY" "$EXP2_EXECUTED_TASKS"
+        write_summary 3 "$EXP3_SUMMARY" "$EXP3_EXECUTED_TASKS"
         
         echo "## Conclusion" >> $GITHUB_STEP_SUMMARY
-        echo "$SUMMARY_FINDINGS" >> $GITHUB_STEP_SUMMARY
+        echo "$FINDINGS_SUMMARY" >> $GITHUB_STEP_SUMMARY
