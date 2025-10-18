@@ -31,15 +31,23 @@ runs:
         DEVELOCITY_API_KEY: ${{ inputs.develocityApiKey }}
       run: |
         capture_results() {
-          local experiment build_scan_url develocity_server build_scan_id results
+          local experiment build_scan_url develocity_server build_scan_id results executed_tasks executed_cacheable_tasks
           experiment="$1"
           build_scan_url="$2"
         
-          develocity_server="$(echo "$build_scan_url" | cut -d'/' -f1,2,3)"
-          build_scan_id="$(extract_build_scan_id "$build_scan_url")"
-          results="$(fetch_results "$develocity_server" "$build_scan_id")"
-        
-          echo "results-${experiment}=$results" >> "$GITHUB_OUTPUT"
+          if [[ -n "$build_scan_url" ]]; then
+            develocity_server="$(echo "$build_scan_url" | cut -d'/' -f1,2,3)"
+            build_scan_id="$(extract_build_scan_id "$build_scan_url")"
+            results="$(fetch_results "$develocity_server" "$build_scan_id")"
+            executed_tasks="$(echo "$results" | jq --raw-output '.models.gradleBuildCachePerformance.model.taskExecution | map(select(.avoidanceOutcome == "executed_cacheable" or .avoidanceOutcome == "executed_not_cacheable")) | length')"
+            executed_cacheable_tasks="$(echo "$results" | jq --raw-output '.models.gradleBuildCachePerformance.model.taskExecution | map(select(.avoidanceOutcome == "executed_cacheable")) | length')"
+          
+            echo "${experiment}-results=$results" >> "$GITHUB_OUTPUT"
+            echo "${experiment}-executed-tasks=$executed_tasks" >> "$GITHUB_OUTPUT"
+            echo "${experiment}-executed-cacheable-tasks=$executed_cacheable_tasks" >> "$GITHUB_OUTPUT"
+          else
+            echo "${experiment}-results=This experiment didn't yield any results. The job may have failed." >> "$GITHUB_OUTPUT"
+          fi
         }
   
         extract_build_scan_id() {
@@ -61,6 +69,7 @@ runs:
         capture_results exp3 "$BUILD_SCAN_EXP3"
     - name: Summarize experiment 1 results
       id: summarize-exp1
+      if: steps.fetch-results.outputs.exp1-executed-tasks != '0' && inputs.buildScanExperiment1 != null
       uses: google-github-actions/run-gemini-cli@v0.1.13
       with:
         gemini_api_key: ${{ inputs.geminiApiKey }}
@@ -175,10 +184,11 @@ runs:
           Now, analyze the following build data and generate the report as instructed:
           
           ```
-          ${{ steps.fetch-results.outputs.results-exp1 }}
+          ${{ steps.fetch-results.outputs.exp1-results }}
           ```
     - name: Summarize experiment 2 results
-      id: summarize-exp1
+      id: summarize-exp2
+      if: steps.fetch-results.outputs.exp2-executed-cacheable-tasks != '0' && inputs.buildScanExperiment2 != null
       uses: google-github-actions/run-gemini-cli@v0.1.13
       with:
         gemini_api_key: ${{ inputs.geminiApiKey }}
@@ -301,7 +311,7 @@ runs:
           
           #### Potential savings
           
-          By addressing these caching issues, you could save up to 35,000 ms in build time, which was the total duration of the re-executed cacheable tasks.
+          By addressing these caching issues, you could save up to 35 seconds in build time, which was the total duration of the re-executed cacheable tasks.
           
           #### Recommendation
           
@@ -314,17 +324,18 @@ runs:
           Experiment 2 results:
           
           ```
-          ${{ steps.fetch-results.outputs.results-exp2 }}
+          ${{ steps.fetch-results.outputs.exp2-results }}
           ```
           
           Experiment 3 results (for additional context):
           
           ```
-          ${{ steps.fetch-results.outputs.results-exp3 }}
+          ${{ steps.fetch-results.outputs.exp3-results }}
           ```
     - name: Summarize experiment 3 results
       id: summarize-exp3
       uses: google-github-actions/run-gemini-cli@v0.1.13
+      if: steps.fetch-results.outputs.exp3-executed-cacheable-tasks != '0' && inputs.buildScanExperiment3 != null
       with:
         gemini_api_key: ${{ inputs.geminiApiKey }}
         prompt: |
@@ -458,13 +469,13 @@ runs:
           Experiment 3 results:
           
           ```
-          ${{ steps.fetch-results.outputs.results-exp3 }}
+          ${{ steps.fetch-results.outputs.exp3-results }}
           ```
           
           Experiment 2 results (for additional context):
           
           ```
-          ${{ steps.fetch-results.outputs.results-exp2 }}
+          ${{ steps.fetch-results.outputs.exp2-results }}
           ```
     - name: Summarize findings
       id: summarize-findings
@@ -482,18 +493,19 @@ runs:
         
           You will be provided with two separate build analysis summaries, generated from two different experiments:
         
-          1. Analysis of in-place caching issues (from Experiment 2): This report identifies tasks that were re-executed when the build was run twice in the same location. These failures are likely caused by volatile inputs (e.g., timestamps) or non-deterministic outputs.
-          2. Analysis of non-relocatable tasks (from Experiment 3): This report identifies tasks that were re-executed when the build was run in a different location. These failures are likely caused by non-relocatable inputs (e.g., absolute file paths).
+          1. Analysis of in-place caching issues (from Experiment 1): This report identifies tasks that were re-executed rather than being up-to-date when the build was run twice in the same location and were therefore not up-to-date. This is likely caused by volatile inputs (e.g., timestamps) or non-deterministic outputs.
+          2. Analysis of in-place caching issues (from Experiment 2): This report identifies tasks that were re-executed rather than being reused from the build cache when the build was run twice in the same location. These failures are likely caused by volatile inputs (e.g., timestamps) or non-deterministic outputs.
+          3. Analysis of non-relocatable tasks (from Experiment 3): This report identifies tasks that were re-executed rather than being reused from the build cache when the build was run in a different location. These failures are likely caused by non-relocatable inputs (e.g., absolute file paths).
           
           ### Task
         
-          Your task is to consume both analysis reports and generate a single, unified summary.
+          Your task is to consume all analysis reports and generate a single, unified summary.
           This summary should provide a holistic view of the build's caching performance, highlighting the different types of problems discovered and their combined impact.
           You should:
         
-          1. Synthesize findings: Combine the results from both reports to explain the overall state of build cacheability.
-          2. Identify overlapping issues: Point out if the same tasks are failing in both experiments, as this indicates multiple, complex problems for a single task.
-          3. Provide a unified recommendation: Create a single, prioritized list of actions based on the findings from both reports.
+          1. Synthesize findings: Combine the results from all reports to explain the overall state of build cacheability.
+          2. Identify overlapping issues: Point out if the same tasks are failing in two or more experiments, as this indicates there may be multiple, complex problems for a single task.
+          3. Provide a unified recommendation: Create a single, prioritized list of actions based on the findings from all reports.
           
           ### Format
         
@@ -502,7 +514,7 @@ runs:
           ```
           #### Key findings
           
-          [A bulleted list that synthesizes the main problems from both reports]
+          [A bulleted list that synthesizes the main problems from all reports]
           
           #### Recommendation
           
@@ -511,9 +523,25 @@ runs:
           
           Exemplar
         
-          Given these two input reports:
+          Given these three input reports:
           
-          Input 1: Analysis of In-Place Caching Issues (Experiment 2)
+          Experiment 1 analysis:
+          
+          ```
+          #### Problematic tasks
+          * :core-utils:compileJava
+          
+          #### Likely root cause
+          The task was re-executed... possibly due to unstable inputs and outputs outputs...
+          
+          #### Potential savings
+          By addressing issue, you could save up to 35 seconds in build time...
+          
+          #### Recommendation
+          Find the the `:core-utils:compileJava` task and inspect its configuration for any signs of volatility...
+          ```
+          
+          Experiment 2 analysis:
           
           ```
           #### Problematic tasks
@@ -523,14 +551,14 @@ runs:
           The most likely reason this task was re-executed... is due to unstable inputs or non-deterministic outputs...
           
           #### Potential savings
-          By addressing this caching issue, you could save up to 35,000 ms in build time...
+          By addressing this caching issue, you could save up to 35 seconds in build time...
           
           #### Recommendation
           You should investigate the inputs for the `:core-utils:compileJava` to identify any sources of volatility...
           
           ```
-        
-          Input 2: Analysis of Non-Relocatable Tasks (Experiment 3)
+          
+          Experiment 3 analysis:
           
           ```          
           #### Problematic tasks
@@ -552,12 +580,12 @@ runs:
           #### Key findings
           
           * The build suffers from two distinct types of caching problems: volatile inputs (tasks re-running in the same location) and non-relocatability (tasks re-running in a new location).
-          * The task `:core-utils:compileJava` re-executed in both experiments, suggesting it may have issues involving volatility, non-relocatable inputs, or both.
+          * The task `:core-utils:compileJava` re-executed in all experiments, suggesting it may have issues involving volatility, non-relocatable inputs, or both.
           * The task `:feature-login:compileJava` appears to have non-relocatable inputs since running the build from different directories caused it to re-execute, making it another key target for optimization.
           
           #### Recommendation
           
-          The top priority should be a thorough investigation of the `:core-utils:compileJava` and `:feature-login:compileJava` tasks, as they fail under multiple conditions. Begin by addressing the volatile inputs identified in the in-place caching analysis, as these issues often require more in-depth code changes. Afterward, address the non-relocatable inputs by ensuring all file paths are relative. Fixing these core tasks will have the most significant impact on build performance and reliability.
+          The top priority should be a thorough investigation of the `:core-utils:compileJava` and `:feature-login:compileJava` tasks. Begin by addressing the volatile inputs identified in Experiment 1 and 2, as these issues often require more in-depth code changes. Afterward, address the non-relocatable inputs identified by Experiment 3 ensuring all file paths are relative. Fixing these core tasks will have the most significant impact on build performance and reliability.
           ```
           
           ---
@@ -567,29 +595,46 @@ runs:
           Experiment 2 analysis:
           
           ```
-          ${{ steps.summarize-results-exp2.outputs.summary }}
+          ${{ steps.summarize-exp2.outputs.summary }}
           ```
           
           Experiment 3 analysis:
           
           ```
-          ${{ steps.summarize-results-exp3.outputs.summary }}
+          ${{ steps.summarize-exp3.outputs.summary }}
           ```
-
     - name: Capture results
       shell: bash
       env:
-        SUMMARY_EXP1: ${{ steps.summarize-exp1.outputs.summary }}
-        SUMMARY_EXP2: ${{ steps.summarize-exp2.outputs.summary }}
-        SUMMARY_EXP3: ${{ steps.summarize-exp3.outputs.summary }}
+        EXP1_SUMMARY: ${{ steps.summarize-exp1.outputs.summary }}
+        EXP1_EXECUTED_TASKS: ${{ steps.fetch-results.outputs.exp1-executed-tasks }}
+        EXP2_SUMMARY: ${{ steps.summarize-exp2.outputs.summary }}
+        EXP2_EXECUTED_TASKS: ${{ steps.fetch-results.outputs.exp2-executed-cacheable-tasks }}
+        EXP3_SUMMARY: ${{ steps.summarize-exp3.outputs.summary }}
+        EXP3_EXECUTED_TASKS: ${{ steps.fetch-results.outputs.exp3-executed-cacheable-tasks }}
         SUMMARY_FINDINGS: ${{ steps.summarize-findings.outputs.summary }}
       run: |
+        write_summary() {
+          local experiment_number summary executed_tasks
+          experiment_number="$1"
+          summary="$2"
+          executed_tasks="$3"
+        
+          echo "## Experiment $experiment_number" >> $GITHUB_STEP_SUMMARY
+          if [[ -n "$summary" ]]; then
+            echo "$summary" >> $GITHUB_STEP_SUMMARY
+          elif [[ "$executed_tasks" == "0" ]]; then
+            echo "This experiment completed successfully, so no summary was generated." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "This experiment didn't yield any results. The job may have failed." >> $GITHUB_STEP_SUMMARY
+          fi
+        }
+        
         echo "# Summary"
-        echo "## Experiment 1" >> $GITHUB_STEP_SUMMARY
-        echo "$SUMMARY_EXP1" >> $GITHUB_STEP_SUMMARY
-        echo "## Experiment 2" >> $GITHUB_STEP_SUMMARY
-        echo "$SUMMARY_EXP2" >> $GITHUB_STEP_SUMMARY
-        echo "## Experiment 3" >> $GITHUB_STEP_SUMMARY
-        echo "$SUMMARY_EXP3" >> $GITHUB_STEP_SUMMARY
+        
+        write_summary 1 "$SUMMARY_EXP1" "$EXP1_EXECUTED_TASKS"
+        write_summary 2 "$SUMMARY_EXP2" "$EXP2_EXECUTED_TASKS"
+        write_summary 3 "$SUMMARY_EXP3" "$EXP3_EXECUTED_TASKS"
+        
         echo "## Conclusion" >> $GITHUB_STEP_SUMMARY
         echo "$SUMMARY_FINDINGS" >> $GITHUB_STEP_SUMMARY

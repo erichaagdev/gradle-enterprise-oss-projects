@@ -58,7 +58,7 @@ jobs:
           gitRepo: ${{ env.GIT_REPO }}
           tasks: ${{ env.TASKS }}
           develocityUrl: ${{ env.DEVELOCITY_URL }}
-          failIfNotFullyCacheable: false
+          failIfNotFullyCacheable: true
         if: matrix.experimentId == 2
       - name: Run experiment 3
         id: run-exp3
@@ -70,13 +70,14 @@ jobs:
           gitRepo: ${{ env.GIT_REPO }}
           tasks: ${{ env.TASKS }}
           develocityUrl: ${{ env.DEVELOCITY_URL }}
-          failIfNotFullyCacheable: false
+          failIfNotFullyCacheable: true
         if: matrix.experimentId == 3
 
   analyze:
     name: Analyze results
     runs-on: ubuntu-latest
     needs: experiments
+    if: always()
     steps:
       - name: Analyze experiment results
         uses: erichaagdev/gradle-enterprise-oss-projects/.github/actions/analyze-gradle-experiment-results@main
