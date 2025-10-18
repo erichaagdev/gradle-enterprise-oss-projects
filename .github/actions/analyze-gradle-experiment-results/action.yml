@@ -606,7 +606,7 @@ runs:
     - name: Capture results
       shell: bash
       env:
-        SUMMARY_FILE: ${{ runner.temp }}/summary.md
+        SUMMARY_FILE: ${{ runner.temp }}/experiments-summary.md
         EXP1_SUMMARY: ${{ steps.summarize-exp1.outputs.summary }}
         EXP1_EXECUTED_TASKS: ${{ steps.fetch-results.outputs.exp1-executed-tasks }}
         EXP2_SUMMARY: ${{ steps.summarize-exp2.outputs.summary }}
@@ -644,5 +644,5 @@ runs:
     - name: Archive experiment summary
       uses: actions/upload-artifact@v4
       with:
-        name: experiment-summary
-        path: ${{ runner.temp }}/summary.md
+        name: experiments-summary
+        path: ${{ runner.temp }}/experiments-summary.md
