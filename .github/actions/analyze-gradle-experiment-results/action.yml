@@ -31,7 +31,7 @@ runs:
         DEVELOCITY_API_KEY: ${{ inputs.develocityApiKey }}
       run: |
         capture_results() {
-          local experiment build_scan_url develocity_server build_scan_id results executed_tasks executed_cacheable_tasks
+          local experiment build_scan_url develocity_server build_scan_id results previous_results executed_tasks executed_cacheable_tasks
           experiment="$1"
           build_scan_url="$2"
         
@@ -39,10 +39,13 @@ runs:
             develocity_server="$(echo "$build_scan_url" | cut -d'/' -f1,2,3)"
             build_scan_id="$(extract_build_scan_id "$build_scan_url")"
             results="$(fetch_results "$develocity_server" "$build_scan_id")"
+            previous_results="$(fetch_previous_results "$develocity_server" "$results")"
+        
             executed_tasks="$(echo "$results" | jq --raw-output '.models.gradleBuildCachePerformance.model.taskExecution | map(select(.avoidanceOutcome == "executed_cacheable" or .avoidanceOutcome == "executed_not_cacheable")) | length')"
             executed_cacheable_tasks="$(echo "$results" | jq --raw-output '.models.gradleBuildCachePerformance.model.taskExecution | map(select(.avoidanceOutcome == "executed_cacheable")) | length')"
-          
+        
             echo "${experiment}-results=$results" >> "$GITHUB_OUTPUT"
+            echo "${experiment}-previous-results=$previous_results" >> "$GITHUB_OUTPUT"
             echo "${experiment}-executed-tasks=$executed_tasks" >> "$GITHUB_OUTPUT"
             echo "${experiment}-executed-cacheable-tasks=$executed_cacheable_tasks" >> "$GITHUB_OUTPUT"
           else
@@ -62,6 +65,20 @@ runs:
           curl -s \
             -H "Authorization: Bearer $DEVELOCITY_API_KEY" \
             "$develocity_server/api/builds/$build_scan_id?models=gradle-attributes&models=gradle-build-cache-performance"
+        }
+  
+        fetch_previous_results() {
+          local develocity_server results project experiment_id experiment_run_id
+          develocity_server="$1"
+          results="$2"
+        
+          project="$(echo "$results" | jq '.[].models.gradleAttributes.model.rootProjectName')"
+          experiment_id="$(echo "$results" | jq '.[0].models.gradleAttributes.model.values[] | select(.name == "Experiment id").value')"
+          experiment_run_id="$(echo "$results" | jq '.[0].models.gradleAttributes.model.values[] | select(.name == "Experiment run id").value')"
+        
+          curl -s \
+            -H "Authorization: Bearer $DEVELOCITY_API_KEY" \
+            "$develocity_server/api/builds?reverse=true&maxBuilds=1&models=gradle-attributes&models=gradle-build-cache-performance&query=project%3A%22${project}%22%20tag%3A%22${experiment_id}%22%20-value%3A%22Experiment%20run%20id%3D${experiment_run_id}%22"
         }
         
         capture_results exp1 "$BUILD_SCAN_EXP1"
@@ -348,30 +365,33 @@ runs:
           ## Context
           
           You will be analyzing the results of multiple Develocity Build Validation experiments.
-          While data from several experiments may be provided, your primary focus is to analyze the results of Experiment 3, which tests for non-relocatable tasks.
+          While data from several experiments may be provided, your primary focus is to analyze the results of the current Experiment 3, which tests for non-relocatable tasks.
 
           Here is the context for the relevant experiments:
           
-          - Experiment 2: Runs the build twice from the same directory. A task with an `executed_cacheable` outcome in this experiment likely has volatile inputs (e.g., timestamps) or non-deterministic outputs.
-          - Experiment 3: Runs the build twice from different directories. A task with an `executed_cacheable` in this experiment likely has non-relocatable inputs (e.g., absolute file paths).          
+          - Experiment 2 (current run): Runs the build twice from the same directory. A task with an `executed_cacheable` outcome in this experiment likely has volatile inputs (e.g., timestamps) or non-deterministic outputs.
+          - Experiment 3 (current run): Runs the build twice from different directories. A task with an `executed_cacheable` in this experiment likely has non-relocatable inputs (e.g., absolute file paths).          
+          - Experiment 3 (previous run): Provides a historical baseline of the project's relocatability.          
 
           Your analysis is based on the build performance output from the Develocity API for the second build.
           Ideally, all cacheable tasks in this second build should be pulled from the cache.
           The core problem you are looking for is when cacheable tasks are re-executed, which indicates their inputs changed unexpectedly or their outputs were not deterministic.
 
-          Your unique task is to use the results from Experiment 2 to make a more intelligent diagnosis of the executed cacheable tasks in Experiment 3.
+          Your unique task is to use the results from both Experiment 2 and the previous Experiment 3 to make a more intelligent diagnosis of the executed cacheable tasks in the current Experiment 3.
           The core analytical logic is as follows:
           
-          - If a task is `executed_cacheable` in Experiment 3 but was `from_cache` in Experiment 2, the problem is almost certainly due to non-relocatable inputs.
-          - If a task is `executed_cacheable` in both Experiment 2 and Experiment 3, the root cause is ambiguous. It could suffer from non-relocatable inputs, volatile inputs, or both.
+          1. Identify regressions: If a task is `executed_cacheable` in the current Experiment 3 but was `from_cache` in the previous Experiment 3, this indicates a regression that has recently broken its relocatability.
+          2. Analyze current results:
+            - If a task is `executed_cacheable` in the current Experiment 3 but was `from_cache` in Experiment 2, the problem is almost certainly due to non-relocatable inputs.
+            - If a task is `executed_cacheable` in both the current Experiment 2 and Experiment 3, the root cause is ambiguous. It could suffer from non-relocatable inputs, volatile inputs, or both.
 
           ### Task
 
-          Your task is to analyze the provided JSON from Experiment 3, using the data from Experiment 2 as context. Your report must:
+          Your task is to analyze the provided JSON from the current Experiment 3, using the other results as context. Your report must:
 
-          - Identify problematic tasks: Pinpoint tasks from Experiment 3 where the `avoidanceOutcome` is `executed_cacheable`, using the `taskPath` to identify them. Do not analyze tasks with other outcomes.
-          - Diagnose the likely root cause: For each problematic task, use the cross-experiment logic to determine the most probable cause. Differentiate between tasks that are clearly non-relocatable and those with ambiguous failures.
-          - Quantify the impact: Calculate the total potential time savings by summing the duration (in milliseconds) for every task that was `executed_cacheable` in Experiment 3.
+          - Identify problematic tasks: Pinpoint tasks from the current Experiment 3 where the `avoidanceOutcome` is `executed_cacheable`, using the `taskPath` to identify them. Do not analyze tasks with other outcomes.
+          - Diagnose the likely root cause: For each problematic task, use the full cross-experiment logic to determine the most probable cause. Differentiate between regressions, non-relocatable tasks, and those with ambiguous failures.
+          - Quantify the impact: Calculate the total potential time savings by summing the `duration` (in milliseconds) for every task that was `executed_cacheable` in the current Experiment 3.
           - Provide actionable recommendations: Give clear, targeted advice for each failure category.
 
           ### Format
@@ -385,15 +405,15 @@ runs:
           
           #### Likely Root Cause
           
-          [A paragraph explaining the diagnosis based on the comparison with Experiment 2. Clearly separate the different categories of failures]
+          [A paragraph explaining the diagnosis based on the comparison with all provided experiments. Clearly separate the different categories of failures, including regressions]
           
           #### Potential Savings
           
-          [A short sentence stating the total time that could be saved based on Experiment 3's results]
+          [A short sentence stating the total time that could be saved based on the current Experiment 3's results]
           
           #### Recommendation
           
-          [A clear paragraph outlining the next steps the user should take]
+          [A clear paragraph outlining the next steps the user should take, tailored to the different findings]
           ```
           
           ### Exemplar
@@ -406,7 +426,20 @@ runs:
           {
             "taskExecution": [
               { "taskPath": ":feature-login:compileJava", "avoidanceOutcome": "from_cache" },
-              { "taskPath": ":core-utils:compileJava", "avoidanceOutcome": "executed_cacheable" }
+              { "taskPath": ":core-utils:compileJava", "avoidanceOutcome": "executed_cacheable" },
+              { "taskPath": ":shared-ui:compileJava", "avoidanceOutcome": "from_cache" }
+            ]
+          }
+          ```
+          
+          Previous Experiment 3 results:
+  
+          ```
+          {
+            "taskExecution": [
+              { "taskPath": ":feature-login:compileJava", "avoidanceOutcome": "executed_cacheable" },
+              { "taskPath": ":core-utils:compileJava", "avoidanceOutcome": "executed_cacheable" },
+              { "taskPath": ":shared-ui:compileJava", "avoidanceOutcome": "from_cache" }
             ]
           }
           ```
@@ -433,6 +466,12 @@ runs:
                 "taskType": "org.gradle.language.jvm.tasks.ProcessResources",
                 "avoidanceOutcome": "executed_not_cacheable",
                 "duration": 18000
+              },
+              {
+                "taskPath": ":shared-ui:compileJava",
+                "taskType": "org.gradle.api.tasks.compile.JavaCompile",
+                "avoidanceOutcome": "executed_cacheable",
+                "duration": 12000
               }
             ]
           }
@@ -445,21 +484,23 @@ runs:
 
           - `:feature-login:compileJava`
           - `:core-utils:compileJava`
-
+          - `:shared-ui:compileJava`
+        
           #### Likely root cause
-
-          Based on a comparison between the experiments, we can diagnose the following:
-
-          - Non-relocatable input: The task `:feature-login:compileJava` was executed in this experiment but was taken from the cache in Experiment 2. This strongly indicates that it has non-relocatable inputs, such as absolute file paths.
-          - Ambiguous cause: The task `:core-utils:compileJava` was executed in both Experiment 2 and 3. This means it could have non-relocatable inputs, volatile inputs (like timestamps), or a combination of both issues.
-
+        
+          Based on a comparison across the experiments, we can diagnose the following:
+        
+          - **Regression:** The task `:shared-ui:compileJava` was taken from the cache in the previous run but was executed in this run. This may indicate a recent change has introduced a non-relocatable input, breaking its cacheability.
+          - **Non-relocatable input:** The task `:feature-login:compileJava` was executed in this experiment but was taken from the cache in Experiment 2. This indicates that it might have a non-relocatable input, such as absolute file paths.
+          - **Ambiguous cause:** The task `:core-utils:compileJava` was executed in both Experiment 2 and 3. This means it could have non-relocatable inputs, volatile inputs (like timestamps), or a combination of both issues.
+        
           #### Potential savings
-
-          By addressing these issues, you could save up to 35 seconds in build time, which was the total duration of the re-executed cacheable tasks in this experiment.
+          
+          By addressing these issues, you could save up to 47 seconds in build time, which was the total duration of the re-executed cacheable tasks in this experiment.
           
           #### Recommendation
           
-          You should investigate the inputs for both tasks. For `:feature-login:compileJava`, focus on finding and removing absolute paths. For `:core-utils:compileJava`, the investigation is broader; you should check for both non-relocatable inputs and sources of volatility, such as timestamps or non-deterministic logic.
+          You should investigate the inputs for all three tasks. For the regression in `:shared-ui:compileJava`, focus on recent code changes to identify the cause. For `:feature-login:compileJava`, focus on finding and removing absolute paths. For `:core-utils:compileJava`, the investigation is broader; you should check for both non-relocatable inputs and sources of volatility.
           ```
           
           ---
@@ -470,6 +511,12 @@ runs:
           
           ```
           ${{ steps.fetch-results.outputs.exp3-results }}
+          ```
+          
+          Previous Experiment 3 results (for additional context):
+          
+          ```
+          ${{ steps.fetch-results.outputs.exp3-previous-results }}
           ```
           
           Experiment 2 results (for additional context):
@@ -606,6 +653,7 @@ runs:
     - name: Capture results
       shell: bash
       env:
+        WORKFLOW_NAME: ${{ github.workflow }}
         SUMMARY_FILE: ${{ runner.temp }}/experiments-summary.md
         EXP1_SUMMARY: ${{ steps.summarize-exp1.outputs.summary }}
         EXP1_EXECUTED_TASKS: ${{ steps.fetch-results.outputs.exp1-executed-tasks }}
@@ -631,7 +679,7 @@ runs:
           fi
         }
         
-        echo "# Summary"
+        echo "# $WORKFLOW_NAME Experiments Summary" >> $SUMMARY_FILE
         
         write_summary 1 "$EXP1_SUMMARY" "$EXP1_EXECUTED_TASKS"
         write_summary 2 "$EXP2_SUMMARY" "$EXP2_EXECUTED_TASKS"
