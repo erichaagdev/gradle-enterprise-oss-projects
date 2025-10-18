@@ -606,6 +606,7 @@ runs:
     - name: Capture results
       shell: bash
       env:
+        SUMMARY_FILE: ${{ runner.temp }}/summary.md
         EXP1_SUMMARY: ${{ steps.summarize-exp1.outputs.summary }}
         EXP1_EXECUTED_TASKS: ${{ steps.fetch-results.outputs.exp1-executed-tasks }}
         EXP2_SUMMARY: ${{ steps.summarize-exp2.outputs.summary }}
@@ -620,13 +621,13 @@ runs:
           summary="$2"
           executed_tasks="$3"
         
-          echo "## Experiment $experiment_number" >> $GITHUB_STEP_SUMMARY
+          echo "## Experiment $experiment_number" >> $SUMMARY_FILE
           if [[ -n "$summary" ]]; then
-            echo "$summary" >> $GITHUB_STEP_SUMMARY
+            echo "$summary" >> $SUMMARY_FILE
           elif [[ "$executed_tasks" == "0" ]]; then
-            echo "This experiment completed successfully, so no summary was generated." >> $GITHUB_STEP_SUMMARY
+            echo "This experiment completed successfully, so no summary was generated." >> $SUMMARY_FILE
           else
-            echo "This experiment didn't yield any results. The job may have failed." >> $GITHUB_STEP_SUMMARY
+            echo "This experiment didn't yield any results. The job may have failed." >> $SUMMARY_FILE
           fi
         }
         
@@ -636,5 +637,12 @@ runs:
         write_summary 2 "$EXP2_SUMMARY" "$EXP2_EXECUTED_TASKS"
         write_summary 3 "$EXP3_SUMMARY" "$EXP3_EXECUTED_TASKS"
         
-        echo "## Conclusion" >> $GITHUB_STEP_SUMMARY
-        echo "$FINDINGS_SUMMARY" >> $GITHUB_STEP_SUMMARY
+        echo "## Conclusion" >> $SUMMARY_FILE
+        echo "$FINDINGS_SUMMARY" >> $SUMMARY_FILE
+        
+        cat $SUMMARY_FILE >> $GITHUB_STEP_SUMMARY
+    - name: Archive experiment summary
+      uses: actions/upload-artifact@v4
+      with:
+        name: experiment-summary
+        path: ${{ runner.temp }}/summary.md
