@@ -39,9 +39,7 @@ runs:
             develocity_server="$(echo "$build_scan_url" | cut -d'/' -f1,2,3)"
             build_scan_id="$(extract_build_scan_id "$build_scan_url")"
             results="$(fetch_results "$develocity_server" "$build_scan_id")"
-            echo "$results"
             previous_results="$(fetch_previous_results "$develocity_server" "$results")"
-            echo "$previous_results"
         
             executed_tasks="$(echo "$results" | jq --raw-output '.models.gradleBuildCachePerformance.model.taskExecution | map(select(.avoidanceOutcome == "executed_cacheable" or .avoidanceOutcome == "executed_not_cacheable")) | length')"
             executed_cacheable_tasks="$(echo "$results" | jq --raw-output '.models.gradleBuildCachePerformance.model.taskExecution | map(select(.avoidanceOutcome == "executed_cacheable")) | length')"
@@ -77,8 +75,6 @@ runs:
           project="$(echo "$results" | jq --raw-output '.models.gradleAttributes.model.rootProjectName')"
           experiment_id="$(echo "$results" | jq --raw-output '.models.gradleAttributes.model.values[] | select(.name == "Experiment id").value')"
           experiment_run_id="$(echo "$results" | jq --raw-output '.models.gradleAttributes.model.values[] | select(.name == "Experiment run id").value')"
-        
-          echo "$develocity_server/api/builds?reverse=true&maxBuilds=1&models=gradle-attributes&models=gradle-build-cache-performance&query=project%3A%22${project}%22%20tag%3A%22${experiment_id}%22%20-value%3A%22Experiment%20run%20id%3D${experiment_run_id}%22"
         
           curl -s \
             -H "Authorization: Bearer $DEVELOCITY_API_KEY" \
