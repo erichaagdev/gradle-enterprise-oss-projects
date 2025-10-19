@@ -74,9 +74,9 @@ runs:
           develocity_server="$1"
           results="$2"
         
-          project="$(echo "$results" | jq '.[].models.gradleAttributes.model.rootProjectName')"
-          experiment_id="$(echo "$results" | jq '.[0].models.gradleAttributes.model.values[] | select(.name == "Experiment id").value')"
-          experiment_run_id="$(echo "$results" | jq '.[0].models.gradleAttributes.model.values[] | select(.name == "Experiment run id").value')"
+          project="$(echo "$results" | jq '.models.gradleAttributes.model.rootProjectName')"
+          experiment_id="$(echo "$results" | jq '.models.gradleAttributes.model.values[] | select(.name == "Experiment id").value')"
+          experiment_run_id="$(echo "$results" | jq '.models.gradleAttributes.model.values[] | select(.name == "Experiment run id").value')"
         
           echo "$develocity_server/api/builds?reverse=true&maxBuilds=1&models=gradle-attributes&models=gradle-build-cache-performance&query=project%3A%22${project}%22%20tag%3A%22${experiment_id}%22%20-value%3A%22Experiment%20run%20id%3D${experiment_run_id}%22"
         
