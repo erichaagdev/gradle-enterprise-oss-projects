@@ -1,0 +1,23 @@
+name: Analyze experiments
+
+on:
+#  push:
+#    branches:
+#      - main
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Fetch all experiment results
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh issue comment $ISSUE --body "Thank you for opening this issue!"
+    - name: Summarize findings
+      id: summarize-findings
+      uses: google-github-actions/run-gemini-cli@v0.1.13
+      with:
+        gemini_api_key: ${{ inputs.geminiApiKey }}
+        prompt: |
