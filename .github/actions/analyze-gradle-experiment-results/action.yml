@@ -111,7 +111,8 @@ runs:
           Ideally, all tasks in this second build should be up-to-date.
           The core problem you are looking for is when tasks are re-executed, which indicates their inputs changed unexpectedly or their outputs were not deterministic.
           
-          While the primary purpose is to uncover tasks with volatile inputs (e.g., timestamps) or non-deterministic outputs (e.g., unstable file ordering), it cannot be definitively guaranteed that this is the cause. Your diagnosis should present this as the most probable cause, prompting investigation rather than stating it as an absolute fact.
+          While the primary purpose is to uncover tasks with volatile inputs (e.g., timestamps) or non-deterministic outputs (e.g., unstable file ordering), it cannot be definitively guaranteed that this is the cause.
+          Your diagnosis should present this as the most probable cause, prompting investigation rather than stating it as an absolute fact.
           
           ### Task
           
