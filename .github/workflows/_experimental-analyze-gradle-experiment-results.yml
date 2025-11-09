@@ -35,6 +35,7 @@ jobs:
           BUILD_SCAN_EXP2: ${{ inputs.buildScanExperiment2 }}
           BUILD_SCAN_EXP3: ${{ inputs.buildScanExperiment3 }}
           DEVELOCITY_API_KEY: ${{ secrets.develocityApiKey }}
+          GEMINI_API_KEY: ${{ secrets.geminiApiKey }}
         run: |
           npm install --silent --no-audit --prefer-offline --global @google/gemini-cli@latest
           
