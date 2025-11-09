@@ -218,6 +218,8 @@ jobs:
           
           cat "$PROMPT_FILE"
           
+          cat "$PROMPT_FILE" | rev
+          
           cat "$PROMPT_FILE" | gemini
 
       - name: Summarize experiment 2 results
@@ -352,6 +354,7 @@ jobs:
             You should investigate the inputs for the listed tasks. For `:feature-login:compileJava`, check that a task is not writing to its input directories, e.g., `src/main/java`. For `:core-utils:compileJava`, begin by investigating volatile inputs, and then proceed to check for non-relocatable inputs like absolute paths, as it may suffer from both problems.
             ```
         run: |
+          echo "cat1"
           cat << EOF > "$PROMPT_FILE"
           $PROMPT
           
@@ -372,6 +375,11 @@ jobs:
           \`\`\`
           EOF
           
+          echo "cat2"
           cat "$PROMPT_FILE"
           
+          echo "cat3"
+          cat "$PROMPT_FILE" | rev
+          
+          echo "cat4"
           cat "$PROMPT_FILE" | gemini
