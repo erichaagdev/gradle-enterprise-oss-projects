@@ -36,6 +36,7 @@ jobs:
           BUILD_SCAN_EXP3: ${{ inputs.buildScanExperiment3 }}
           DEVELOCITY_API_KEY: ${{ secrets.develocityApiKey }}
           GEMINI_API_KEY: ${{ secrets.geminiApiKey }}
+          RUNNER_TEMP: ${{ runner.temp }}
         run: |
           npm install --silent --no-audit --prefer-offline --global @google/gemini-cli@latest
 
@@ -59,8 +60,12 @@ jobs:
             executed_tasks="$(echo "$results" | jq --raw-output '.models.gradleBuildCachePerformance.model.taskExecution | map(select(.avoidanceOutcome == "executed_cacheable" or .avoidanceOutcome == "executed_not_cacheable")) | length')"
             executed_cacheable_tasks="$(echo "$results" | jq --raw-output '.models.gradleBuildCachePerformance.model.taskExecution | map(select(.avoidanceOutcome == "executed_cacheable")) | length')"
 
-            echo "${experiment}-results=$results" >> "$GITHUB_OUTPUT"
-            echo "${experiment}-previous-results=$previous_results" >> "$GITHUB_OUTPUT"
+            echo "$results" > "$RUNNER_TEMP/${experiment}-results.json"
+            echo "${experiment}-results=$RUNNER_TEMP/${experiment}-results.json" >> "$GITHUB_OUTPUT"
+          
+            echo "$previous_results" > "$RUNNER_TEMP/${experiment}-previous-results.json"
+            echo "${experiment}-previous-results=$RUNNER_TEMP/${experiment}-previous-results.json" >> "$GITHUB_OUTPUT"
+
             echo "${experiment}-executed-tasks=$executed_tasks" >> "$GITHUB_OUTPUT"
             echo "${experiment}-executed-cacheable-tasks=$executed_cacheable_tasks" >> "$GITHUB_OUTPUT"
           }
@@ -204,24 +209,17 @@ jobs:
             You should investigate the inputs for the listed tasks to identify any sources of volatility, such as timestamps or dynamically generated content that is not stable. Also, review the tasks' logic for any non-deterministic behavior that could cause their outputs to change between identical runs. Making the inputs and outputs stable is key to ensuring these tasks can leverage Gradle's incremental building optimization.
             ```
         run: |
-          cat << EOF > "$PROMPT_FILE"
-          $PROMPT
+          echo -e "$PROMPT\n---\n" > "$PROMPT_FILE"
           
-          ---
+          echo -e "Now, analyze the following build data and generate the report as instructed:\n" >> "$PROMPT_FILE"
           
-          Now, analyze the following build data and generate the report as instructed:
-          
-          \`\`\`
-          $EXP1_RESULTS
-          \`\`\`
-          EOF
+          echo -e '```\n' >> "$PROMPT_FILE"
+          cat "$EXP1_RESULTS" >> "$PROMPT_FILE"
+          echo -e '\n```\n' >> "$PROMPT_FILE"
           
           cat "$PROMPT_FILE"
           
-          cat "$PROMPT_FILE" | rev
-          
           cat "$PROMPT_FILE" | gemini
-
       - name: Summarize experiment 2 results
         env:
           EXP2_RESULTS: ${{ steps.fetch-results.outputs.exp2-results }}
@@ -354,32 +352,20 @@ jobs:
             You should investigate the inputs for the listed tasks. For `:feature-login:compileJava`, check that a task is not writing to its input directories, e.g., `src/main/java`. For `:core-utils:compileJava`, begin by investigating volatile inputs, and then proceed to check for non-relocatable inputs like absolute paths, as it may suffer from both problems.
             ```
         run: |
-          echo "cat1"
-          cat << EOF > "$PROMPT_FILE"
-          $PROMPT
+          echo -e "$PROMPT\n---\n" > "$PROMPT_FILE"
           
-          ---
+          echo -e "Now, analyze the following build data and generate the report as instructed:\n" >> "$PROMPT_FILE"
           
-          Now, analyze the following build data and generate the report as instructed:
-        
-          Experiment 2 results:
-        
-          \`\`\`
-          $EXP2_RESULTS
-          \`\`\`
-        
-          Experiment 3 results (for additional context):
+          echo -e "Experiment 2 results:\n" >> "$PROMPT_FILE"
+          echo -e '```\n' >> "$PROMPT_FILE"
+          cat "$EXP2_RESULTS" >> "$PROMPT_FILE"
+          echo -e '\n```\n' >> "$PROMPT_FILE"
           
-          \`\`\`
-          $EXP3_RESULTS
-          \`\`\`
-          EOF
+          echo -e "Experiment 3 results (for additional context):\n" >> "$PROMPT_FILE"
+          echo -e '```\n' >> "$PROMPT_FILE"
+          cat "$EXP3_RESULTS" >> "$PROMPT_FILE"
+          echo -e '\n```\n' >> "$PROMPT_FILE"
           
-          echo "cat2"
           cat "$PROMPT_FILE"
           
-          echo "cat3"
-          cat "$PROMPT_FILE" | rev
-          
-          echo "cat4"
           cat "$PROMPT_FILE" | gemini
