@@ -96,10 +96,10 @@ jobs:
           capture_results exp3 "$BUILD_SCAN_EXP3"
       - name: Summarize experiment 1 results
         env:
+          GEMINI_API_KEY: ${{ secrets.geminiApiKey }}
           PROMPT_FILE: ${{ runner.temp }}/prompt_1.txt
-          EXP1_RESULTS: ${{ steps.fetch-results.outputs.exp1-results }}
         run: |
-          cat << EOF > "$PROMPT_FILE"
+          cat << 'EOF' > "$PROMPT_FILE"
           ### Persona
           
           You are a Develocity Solutions Engineer, an expert specializing in build performance optimization for Gradle and Maven.
@@ -211,7 +211,7 @@ jobs:
           Now, analyze the following build data and generate the report as instructed:
           
           ```
-          $EXP1_RESULTS
+          ${{ steps.fetch-results.outputs.exp1-results }}
           ```
           EOF
           
