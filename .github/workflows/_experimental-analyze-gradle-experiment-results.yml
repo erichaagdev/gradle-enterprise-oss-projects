@@ -74,10 +74,9 @@ jobs:
             local develocity_server="$1"
             local build_scan_id="$2"
 
-            local results
-            results="$(curl -s \
+            curl -s \
               -H "Authorization: Bearer $DEVELOCITY_API_KEY" \
-              "$develocity_server/api/builds/$build_scan_id?models=gradle-attributes&models=gradle-build-cache-performance")"
+              "$develocity_server/api/builds/$build_scan_id?models=gradle-attributes&models=gradle-build-cache-performance"
           }
 
           fetch_previous_results() {
