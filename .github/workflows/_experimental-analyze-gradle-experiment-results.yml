@@ -231,6 +231,7 @@ jobs:
             summary="This experiment completed successfully, so no summary was generated."
             outcome="successful_no_findings"
           else
+            echo "$(build_prompt)"
             summary="$(build_prompt | gemini)"
             outcome="successful_with_findings"
           fi
