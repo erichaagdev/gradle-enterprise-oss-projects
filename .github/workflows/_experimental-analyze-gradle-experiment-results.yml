@@ -236,6 +236,7 @@ jobs:
           fi
           
           echo "$summary"
+          echo "$summary" > "$TEMP_DIR/exp1-summary.md"
           echo "summary=$TEMP_DIR/exp1-summary.md" >> "$GITHUB_OUTPUT"
           echo "outcome=$outcome" >> "$GITHUB_OUTPUT"
       - name: Summarize experiment 2 results
@@ -403,6 +404,7 @@ jobs:
           fi
           
           echo "$summary"
+          echo "$summary" > "$TEMP_DIR/exp2-summary.md"
           echo "summary=$TEMP_DIR/exp2-summary.md" >> "$GITHUB_OUTPUT"
           echo "outcome=$outcome" >> "$GITHUB_OUTPUT"
       - name: Summarize experiment 3 results
@@ -601,6 +603,7 @@ jobs:
           fi
           
           echo "$summary"
+          echo "$summary" > "$TEMP_DIR/exp3-summary.md"
           echo "summary=$TEMP_DIR/exp3-summary.md" >> "$GITHUB_OUTPUT"
           echo "outcome=$outcome" >> "$GITHUB_OUTPUT"
       - name: Summarize all experiment findings
@@ -756,6 +759,7 @@ jobs:
           fi
           
           echo "$summary"
+          echo "$summary" > "$TEMP_DIR/exps-summary.md"
           echo "summary=$TEMP_DIR/exps-summary.md" >> "$GITHUB_OUTPUT"
       - name: Write final summary
         env:
