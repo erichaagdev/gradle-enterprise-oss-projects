@@ -744,6 +744,7 @@ jobs:
           \`\`\`
           $(cat "$EXP3_SUMMARY")
           \`\`\`
+          EOF
           }
           
           if [[ "$EXP1_OUTCOME" == "successful_with_findings" ||
