@@ -213,15 +213,15 @@ jobs:
         run: |
           build_prompt() {
             cat << EOF
-            $PROMPT
-            ---
-            
-            Now, analyze the following build data and generate the report as instructed:
-  
-            \`\`\`
-            $(cat "$EXP1_RESULTS")
-            \`\`\`
-            EOF
+          $PROMPT
+          ---
+          
+          Now, analyze the following build data and generate the report as instructed:
+
+          \`\`\`
+          $(cat "$EXP1_RESULTS")
+          \`\`\`
+          EOF
           }
           
           if [[ -z "$EXP1_RESULTS" ]]; then
@@ -374,21 +374,21 @@ jobs:
         run: |
           build_prompt() {
             cat << EOF
-            $PROMPT
-            ---
-            
-            Now, analyze the following build data and generate the report as instructed:
-            
-            Experiment 2 results:
-            \`\`\`
-            $(cat "$EXP2_RESULTS")
-            \`\`\`
-            
-            Experiment 3 results (for additional context):
-            \`\`\`
-            $(cat "$EXP3_RESULTS")
-            \`\`\`
-            EOF
+          $PROMPT
+          ---
+          
+          Now, analyze the following build data and generate the report as instructed:
+          
+          Experiment 2 results:
+          \`\`\`
+          $(cat "$EXP2_RESULTS")
+          \`\`\`
+          
+          Experiment 3 results (for additional context):
+          \`\`\`
+          $(cat "$EXP3_RESULTS")
+          \`\`\`
+          EOF
           }
           
           if [[ -z "$EXP2_RESULTS" ]]; then
@@ -564,29 +564,29 @@ jobs:
         run: |
           build_prompt() {
             cat << EOF
-            $PROMPT
-            ---
-            
-            Now, analyze the following build data and generate the report as instructed:
-            
-            Experiment 3 results:
-            
-            \`\`\`
-            $(cat "$EXP3_RESULTS")
-            \`\`\`
-            
-            Previous Experiment 3 results (for additional context):
-            
-            \`\`\`
-            $(cat "$EXP3_PREVIOUS_RESULTS")
-            \`\`\`
-            
-            Experiment 2 results (for additional context):
-            
-            \`\`\`
-            $(cat "$EXP2_RESULTS")
-            \`\`\`
-            EOF
+          $PROMPT
+          ---
+          
+          Now, analyze the following build data and generate the report as instructed:
+          
+          Experiment 3 results:
+          
+          \`\`\`
+          $(cat "$EXP3_RESULTS")
+          \`\`\`
+          
+          Previous Experiment 3 results (for additional context):
+          
+          \`\`\`
+          $(cat "$EXP3_PREVIOUS_RESULTS")
+          \`\`\`
+          
+          Experiment 2 results (for additional context):
+          
+          \`\`\`
+          $(cat "$EXP2_RESULTS")
+          \`\`\`
+          EOF
           }
           
           if [[ -z "$EXP3_RESULTS" ]]; then
@@ -722,28 +722,28 @@ jobs:
         run: |
           build_prompt() {
             cat << EOF
-            $PROMPT
-            ---
-          
-            Now, analyze the following summaries and generate the report as instructed:
-          
-            Experiment 1 summary:
-          
-            \`\`\`
-            $(cat "$EXP1_SUMMARY")
-            \`\`\`
-          
-            Experiment 2 summary:
-          
-            \`\`\`
-            $(cat "$EXP2_SUMMARY")
-            \`\`\`
-          
-            Experiment 3 summary:
-          
-            \`\`\`
-            $(cat "$EXP3_SUMMARY")
-            \`\`\`
+          $PROMPT
+          ---
+        
+          Now, analyze the following summaries and generate the report as instructed:
+        
+          Experiment 1 summary:
+        
+          \`\`\`
+          $(cat "$EXP1_SUMMARY")
+          \`\`\`
+        
+          Experiment 2 summary:
+        
+          \`\`\`
+          $(cat "$EXP2_SUMMARY")
+          \`\`\`
+        
+          Experiment 3 summary:
+        
+          \`\`\`
+          $(cat "$EXP3_SUMMARY")
+          \`\`\`
           }
           
           if [[ "$EXP1_OUTCOME" == "successful_with_findings" ||
