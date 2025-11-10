@@ -771,16 +771,16 @@ jobs:
           echo "# $WORKFLOW_NAME Experiments Summary" >> "$summary_file"
           
           echo "## Experiment 1" >> "$summary_file"
-          echo "$EXP1_SUMMARY" >> "$summary_file"
+          cat "$EXP1_SUMMARY" >> "$summary_file"
           
           echo "## Experiment 2" >> "$summary_file"
-          echo "$EXP2_SUMMARY" >> "$summary_file"
+          cat "$EXP2_SUMMARY" >> "$summary_file"
           
           echo "## Experiment 3" >> "$summary_file"
-          echo "$EXP3_SUMMARY" >> "$summary_file"
+          cat "$EXP3_SUMMARY" >> "$summary_file"
           
           echo "## Conclusion" >> "$summary_file"
-          echo "$EXPS_SUMMARY" >> "$summary_file"
+          cat "$EXPS_SUMMARY" >> "$summary_file"
           
           cat "$summary_file" >> $GITHUB_STEP_SUMMARY
       - name: Archive summary
