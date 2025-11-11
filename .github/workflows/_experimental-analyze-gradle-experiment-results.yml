@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install Gemini CLI
-        run: npm install --silent --no-audit --prefer-offline --global @google/gemini-cli@latest
+        run: npm install --no-audit --prefer-offline --global @google/gemini-cli@latest
       - name: Fetch results
         id: fetch-results
         env:
@@ -40,7 +40,9 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.geminiApiKey }}
           TEMP_DIR: ${{ runner.temp }}
         run: |
-          echo '::warning title=Experimental action usage::The reusable workflow .github/workflows/experimental/analyze-gradle-experiment-results.yml is experimental and not intended for use outside of https://github.com/gradle/develocity-oss-projects.'
+          if [[ "$GITHUB_REPOSITORY" != "gradle/develocity-oss-projects" ]]; then
+            echo '::warning title=Experimental action usage::The reusable workflow .github/workflows/experimental/analyze-gradle-experiment-results.yml is experimental and not intended for use outside of https://github.com/gradle/develocity-oss-projects.'
+          fi
 
           capture_results() {
             local experiment="$1"
