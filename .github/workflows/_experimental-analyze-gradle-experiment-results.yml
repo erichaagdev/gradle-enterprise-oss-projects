@@ -62,11 +62,15 @@ jobs:
             executed_tasks="$(echo "$results" | jq --raw-output '.models.gradleBuildCachePerformance.model.taskExecution | map(select(.avoidanceOutcome == "executed_cacheable" or .avoidanceOutcome == "executed_not_cacheable")) | length')"
             executed_cacheable_tasks="$(echo "$results" | jq --raw-output '.models.gradleBuildCachePerformance.model.taskExecution | map(select(.avoidanceOutcome == "executed_cacheable")) | length')"
 
-            echo "$results" > "$TEMP_DIR/${experiment}-results.json"
-            echo "${experiment}-results=$TEMP_DIR/${experiment}-results.json" >> "$GITHUB_OUTPUT"
+            local results_file previous_results_file
+            results_file="$TEMP_DIR/${experiment}-results.json"
+            previous_results_file="$TEMP_DIR/${experiment}-previous-results.json"
           
-            echo "$previous_results" > "$TEMP_DIR/${experiment}-previous-results.json"
-            echo "${experiment}-previous-results=$TEMP_DIR/${experiment}-previous-results.json" >> "$GITHUB_OUTPUT"
+            echo "$results" > "$results_file"
+            echo "${experiment}-results=$results_file" >> "$GITHUB_OUTPUT"
+          
+            echo "$previous_results" > "$previous_results_file"
+            echo "${experiment}-previous-results=$previous_results_file" >> "$GITHUB_OUTPUT"
 
             echo "${experiment}-executed-tasks=$executed_tasks" >> "$GITHUB_OUTPUT"
             echo "${experiment}-executed-cacheable-tasks=$executed_cacheable_tasks" >> "$GITHUB_OUTPUT"
@@ -238,8 +242,12 @@ jobs:
           fi
           
           echo "$summary"
-          echo "$summary" > "$TEMP_DIR/exp1-summary.md"
-          echo "summary=$TEMP_DIR/exp1-summary.md" >> "$GITHUB_OUTPUT"
+          
+          local summary_file
+          summary_file="$TEMP_DIR/exp1-summary.md"
+          
+          echo "$summary" > "$summary_file"
+          echo "summary=$summary_file" >> "$GITHUB_OUTPUT"
           echo "outcome=$outcome" >> "$GITHUB_OUTPUT"
       - name: Summarize experiment 2 results
         id: summarize-exp2
@@ -407,8 +415,12 @@ jobs:
           fi
           
           echo "$summary"
-          echo "$summary" > "$TEMP_DIR/exp2-summary.md"
-          echo "summary=$TEMP_DIR/exp2-summary.md" >> "$GITHUB_OUTPUT"
+          
+          local summary_file
+          summary_file="$TEMP_DIR/exp2-summary.md"
+          
+          echo "$summary" > "$summary_file"
+          echo "summary=$summary_file" >> "$GITHUB_OUTPUT"
           echo "outcome=$outcome" >> "$GITHUB_OUTPUT"
       - name: Summarize experiment 3 results
         id: summarize-exp3
@@ -607,8 +619,12 @@ jobs:
           fi
           
           echo "$summary"
-          echo "$summary" > "$TEMP_DIR/exp3-summary.md"
-          echo "summary=$TEMP_DIR/exp3-summary.md" >> "$GITHUB_OUTPUT"
+          
+          local summary_file
+          summary_file="$TEMP_DIR/exp3-summary.md"
+          
+          echo "$summary" > "$summary_file"
+          echo "summary=$summary_file" >> "$GITHUB_OUTPUT"
           echo "outcome=$outcome" >> "$GITHUB_OUTPUT"
       - name: Summarize all experiment findings
         id: summarize-exps
@@ -764,8 +780,12 @@ jobs:
           fi
           
           echo "$summary"
-          echo "$summary" > "$TEMP_DIR/exps-summary.md"
-          echo "summary=$TEMP_DIR/exps-summary.md" >> "$GITHUB_OUTPUT"
+          
+          local summary_file
+          summary_file="$TEMP_DIR/exps-summary.md"
+          
+          echo "$summary" > "$summary_file"
+          echo "summary=$summary_file" >> "$GITHUB_OUTPUT"
       - name: Write final summary
         env:
           EXP1_SUMMARY: ${{ steps.summarize-exp1.outputs.summary }}
@@ -777,7 +797,7 @@ jobs:
         run: |
           summary_file="$TEMP_DIR/summary.md"
           
-          echo "# $WORKFLOW_NAME Experiments Summary" >> "$summary_file"
+          echo "# Experiments Summary for $WORKFLOW_NAME" >> "$summary_file"
           
           echo "## Experiment 1" >> "$summary_file"
           cat "$EXP1_SUMMARY" >> "$summary_file"
