@@ -41,7 +41,7 @@ jobs:
           TEMP_DIR: ${{ runner.temp }}
         run: |
           if [[ "$GITHUB_REPOSITORY" != "gradle/develocity-oss-projects" ]]; then
-            echo '::warning title=Experimental action usage::The reusable workflow .github/workflows/experimental/analyze-gradle-experiment-results.yml is experimental and not intended for use outside of https://github.com/gradle/develocity-oss-projects.'
+            echo '::warning title=Experimental action usage::The reusable workflow .github/workflows/experimental/analyze-gradle-experiment-results.yml is experimental and not intended for use outside of https://github.com/gradle/develocity-oss-projects'
           fi
 
           capture_results() {
