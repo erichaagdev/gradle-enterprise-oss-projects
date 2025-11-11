@@ -241,11 +241,8 @@ jobs:
             outcome="successful_with_findings"
           fi
           
-          echo "$summary"
-          
-          local summary_file
           summary_file="$TEMP_DIR/exp1-summary.md"
-          
+          echo "$summary"
           echo "$summary" > "$summary_file"
           echo "summary=$summary_file" >> "$GITHUB_OUTPUT"
           echo "outcome=$outcome" >> "$GITHUB_OUTPUT"
@@ -414,11 +411,8 @@ jobs:
             outcome="successful_with_findings"
           fi
           
-          echo "$summary"
-          
-          local summary_file
           summary_file="$TEMP_DIR/exp2-summary.md"
-          
+          echo "$summary"
           echo "$summary" > "$summary_file"
           echo "summary=$summary_file" >> "$GITHUB_OUTPUT"
           echo "outcome=$outcome" >> "$GITHUB_OUTPUT"
@@ -619,10 +613,7 @@ jobs:
           fi
           
           echo "$summary"
-          
-          local summary_file
           summary_file="$TEMP_DIR/exp3-summary.md"
-          
           echo "$summary" > "$summary_file"
           echo "summary=$summary_file" >> "$GITHUB_OUTPUT"
           echo "outcome=$outcome" >> "$GITHUB_OUTPUT"
@@ -779,11 +770,8 @@ jobs:
             summary="There were no findings, so no conclusion was generated."
           fi
           
-          echo "$summary"
-          
-          local summary_file
           summary_file="$TEMP_DIR/exps-summary.md"
-          
+          echo "$summary"
           echo "$summary" > "$summary_file"
           echo "summary=$summary_file" >> "$GITHUB_OUTPUT"
       - name: Write final summary
